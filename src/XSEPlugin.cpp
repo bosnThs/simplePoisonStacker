@@ -7,7 +7,7 @@ struct currentPoison
 	static RE::AlchemyItem* thunk(RE::InventoryEntryData* poisonTargetWeapon, std::uint32_t*, std::uint32_t*, std::uint32_t*, std::uint32_t*, std::uint32_t*, RE::AlchemyItem* newPoison)
 	{
 		poisonCharges = 0;
-		RE::ExtraPoison* currentPoison = getCurrentPoison(poisonTargetWeapon);
+		auto currentPoison = getCurrentPoison(poisonTargetWeapon);
 		if (currentPoison) {
 			if (currentPoison->poison->formID == newPoison->formID) {
 				poisonCharges = currentPoison->count;
@@ -52,7 +52,7 @@ void Init()
 	stl::write_thunk_call<currentPoison>(targetA.address() + 0x89);
 
 	REL::Relocation<std::uintptr_t> targetB{ RELOCATION_ID(39407, 40482) };
-	stl::write_thunk_call<poisonChargesMult>(targetB.address() + 0xF0);
+	stl::write_thunk_call<poisonChargesMult>(targetB.address() + REL ::Relocate(0x106, 0xF0));
 }
 
 void InitializeLog()
