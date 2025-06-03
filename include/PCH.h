@@ -24,6 +24,7 @@
 #	endif
 #endif
 
+
 // #define MAGIC_ENUM_RANGE_MAX 256
 // #include <magic_enum.hpp>
 
@@ -78,3 +79,4 @@ namespace util
 #define DLLEXPORT __declspec(dllexport)
 
 #include "Plugin.h"
+
