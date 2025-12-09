@@ -1,5 +1,15 @@
-build/
-dist/
-vcpkg_installed/
+# dot folders
+.cache/
 .idea/
-include/steam/
+.vs/
+.vscode/
+.xmake/
+lib/
+
+# folders
+build/
+vs*/
+
+# files
+*.zip
+compile_commands.json
