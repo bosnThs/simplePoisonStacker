@@ -9,6 +9,5 @@ Built from https://github.com/libxse/commonlibsse-template
 ```bat
 git clone https://github.com/bosnThs/simplePoisonStacker
 cd simplePoisonStacker
-git submodule update --init --recursive
 ./BuildRelease.bat
 ```
