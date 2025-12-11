@@ -2,9 +2,14 @@
 
 #include <SimpleIni.h>
 
-std::uint32_t poisonCharges = 0;
+//std::uint32_t poisonCharges = 0;
 std::uint32_t maxPoisonCharges = 0;
 bool          bDisplayNotification = false;
+
+
+RE::BGSEquipSlot* leftHandSlot;
+RE::BGSEquipSlot* rightHandSlot;
+int handSlot = 0;
 
 static void loadIni()
 {
@@ -20,11 +25,17 @@ struct currentPoison
 {
 	static RE::AlchemyItem* thunk(RE::InventoryEntryData* poisonTargetWeapon, std::uint32_t*, std::uint32_t*, std::uint32_t*, std::uint32_t*, std::uint32_t*, RE::AlchemyItem* newPoison)
 	{
-		poisonCharges = 0;
+		//poisonCharges = 0;
+		auto player = RE::PlayerCharacter::GetSingleton();
+		if (player->GetEquippedEntryData(true) && player->GetEquippedEntryData(false) == poisonTargetWeapon && handSlot == 1)
+		{
+			poisonTargetWeapon = player->GetEquippedEntryData(true);
+		}
+
 		auto currentPoison = getCurrentPoison(poisonTargetWeapon);
 		if (currentPoison && currentPoison->poison) {
 			if (currentPoison->poison->formID == newPoison->formID && currentPoison->count < maxPoisonCharges) {
-				poisonCharges = currentPoison->count;
+				//poisonCharges = currentPoison->count;
 				return nullptr;
 			}
 			else
@@ -52,19 +63,25 @@ struct poisonChargesMult
 {
 	static void thunk(RE::InventoryEntryData* poisonTargetWeapon, RE::AlchemyItem* newPoison, int charges)
 	{
+		//auto owner = poisonTargetWeapon->GetOwner();
+		auto player = RE::PlayerCharacter::GetSingleton();
+		if (player->GetEquippedEntryData(true) && player->GetEquippedEntryData(false) == poisonTargetWeapon && handSlot == 1)
+		{
+			poisonTargetWeapon = player->GetEquippedEntryData(true);
+		}
+
 		auto poison = currentPoison::getCurrentPoison(poisonTargetWeapon);
 		if (poison) {
-			if (charges + poisonCharges > maxPoisonCharges)
+			if (charges + poison->count > maxPoisonCharges)
 				poison->count = maxPoisonCharges;
 			else
-				poison->count = charges + poisonCharges;
+				poison->count += charges;
 			return;
 		}
 		func(poisonTargetWeapon, newPoison, charges);
 	}
 	static inline REL::Relocation<decltype(thunk)> func;
 };
-
 
 struct PoisonTarget
 {
@@ -91,8 +108,21 @@ struct PoisonTarget
 	static inline REL::Relocation<decltype(thunk)> func;
 };
 
+struct PoisonWeapon
+{
+	static char thunk(std::int64_t* a1, RE::Actor* a_actor, std::int64_t* a3, RE::BGSEquipSlot* a_equipSlot, char a5)
+	{
+		auto a_form = (RE::TESForm*)*a3;
+		handSlot = 0;
+		if (a_equipSlot && a_equipSlot == leftHandSlot && a_form && a_form->GetFormType() == RE::FormType::AlchemyItem)
+			handSlot = 1;
 
-void Init()
+		return func(a1, a_actor, a3, a_equipSlot, a5);
+	}
+	static inline REL::Relocation<decltype(thunk)> func;
+};
+
+static void Init()
 {
 	loadIni();
 
@@ -104,6 +134,47 @@ void Init()
 
 	REL::Relocation<std::uintptr_t> targetC{ RELOCATION_ID(37673, 38627) };
 	stl::write_thunk_call<PoisonTarget>(targetC.address() + REL::Relocate(0x185, 0x194));
+
+
+	if (REL::Module::IsAE()) {
+		constexpr std::array locationsA{
+			std::make_pair<std::uint64_t, std::size_t>(40570, 0xf2),
+			std::make_pair<std::uint64_t, std::size_t>(51149, 0x76),
+			std::make_pair<std::uint64_t, std::size_t>(51543, 0x235),
+			std::make_pair<std::uint64_t, std::size_t>(51548, 0xc2),  //8ba080
+			std::make_pair<std::uint64_t, std::size_t>(51870, 0x85),  //8ba080
+		};
+		for (const auto& [id, offset] : locationsA) {
+			REL::Relocation<std::uintptr_t> target(REL::ID(id), offset);
+			stl::write_thunk_call<PoisonWeapon>(target.address());
+		}
+	}
+	else {
+		constexpr std::array locationsA{
+			std::make_pair<std::uint64_t, std::size_t>(39491, 0xf2),
+			std::make_pair<std::uint64_t, std::size_t>(50649, 0x236),
+			std::make_pair<std::uint64_t, std::size_t>(50654, 0xc4),
+			std::make_pair<std::uint64_t, std::size_t>(50991, 0x8f),
+		};
+		for (const auto& [id, offset] : locationsA) {
+			REL::Relocation<std::uintptr_t> target(REL::ID(id), offset);
+			stl::write_thunk_call<PoisonWeapon>(target.address());
+		}
+	}
+
+
+	auto g_message = SKSE::GetMessagingInterface();
+	g_message->RegisterListener([](SKSE::MessagingInterface::Message* msg) -> void
+		{
+			if (msg->type == SKSE::MessagingInterface::kDataLoaded) {
+				RE::BSInputDeviceManager* inputEventDispatcher = RE::BSInputDeviceManager::GetSingleton();
+				if (inputEventDispatcher) {
+					auto dataHandler = RE::TESDataHandler::GetSingleton();
+					rightHandSlot = dataHandler->LookupForm<RE::BGSEquipSlot>(0x13f42, "Skyrim.esm");
+					leftHandSlot = dataHandler->LookupForm<RE::BGSEquipSlot>(0x13f43, "Skyrim.esm");
+				}
+			}
+		});
 }
 
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
