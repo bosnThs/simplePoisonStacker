@@ -5,10 +5,10 @@
 //std::uint32_t poisonCharges = 0;
 std::uint32_t maxPoisonCharges = 0;
 bool          bDisplayNotification = false;
+RE::AlchemyItem* newPoison;
 
 
 RE::BGSEquipSlot* leftHandSlot;
-RE::BGSEquipSlot* rightHandSlot;
 int handSlot = 0;
 
 static void loadIni()
@@ -23,7 +23,7 @@ static void loadIni()
 
 struct currentPoison
 {
-	static RE::AlchemyItem* thunk(RE::InventoryEntryData* poisonTargetWeapon, std::uint32_t*, std::uint32_t*, std::uint32_t*, std::uint32_t*, std::uint32_t*, RE::AlchemyItem* newPoison)
+	static RE::AlchemyItem* thunk(RE::InventoryEntryData* poisonTargetWeapon)
 	{
 		//poisonCharges = 0;
 		auto player = RE::PlayerCharacter::GetSingleton();
@@ -33,8 +33,8 @@ struct currentPoison
 		}
 
 		auto currentPoison = getCurrentPoison(poisonTargetWeapon);
-		if (currentPoison && currentPoison->poison) {
-			if (currentPoison->poison->formID == newPoison->formID && currentPoison->count < maxPoisonCharges) {
+		if (newPoison && currentPoison && currentPoison->poison) {
+			if (currentPoison->poison == newPoison && currentPoison->count < maxPoisonCharges) {
 				//poisonCharges = currentPoison->count;
 				return nullptr;
 			}
@@ -57,6 +57,17 @@ struct currentPoison
 		}
 		return nullptr;
 	}
+};
+
+
+struct finalizePoison
+{
+	static char thunk(RE::Actor* a_actor, RE::AlchemyItem* a_poison)
+	{
+		newPoison = a_poison;
+		return func(a_actor, a_poison);
+	}
+	static inline REL::Relocation<decltype(thunk)> func;
 };
 
 struct poisonChargesMult
@@ -122,9 +133,14 @@ struct PoisonWeapon
 	static inline REL::Relocation<decltype(thunk)> func;
 };
 
+
+
 static void Init()
 {
 	loadIni();
+
+	REL::Relocation<std::uintptr_t> targetD{ RELOCATION_ID(36976, 38001) };
+	stl::write_thunk_call<finalizePoison>(targetD.address() + REL::Relocate(0x7A8, 0x733));
 
 	REL::Relocation<std::uintptr_t> targetA{ RELOCATION_ID(39406, 40481) };
 	stl::write_thunk_call<currentPoison>(targetA.address() + 0x89);
@@ -170,7 +186,6 @@ static void Init()
 				RE::BSInputDeviceManager* inputEventDispatcher = RE::BSInputDeviceManager::GetSingleton();
 				if (inputEventDispatcher) {
 					auto dataHandler = RE::TESDataHandler::GetSingleton();
-					rightHandSlot = dataHandler->LookupForm<RE::BGSEquipSlot>(0x13f42, "Skyrim.esm");
 					leftHandSlot = dataHandler->LookupForm<RE::BGSEquipSlot>(0x13f43, "Skyrim.esm");
 				}
 			}

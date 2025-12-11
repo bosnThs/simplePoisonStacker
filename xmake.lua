@@ -6,7 +6,7 @@ includes("lib/commonlibsse-ng")
 
 -- set project
 set_project("simplePoisonStacker")
-set_version("1.1.3")
+set_version("1.2.0")
 set_license("GPL-3.0")
 
 -- set defaults
