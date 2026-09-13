@@ -6,7 +6,7 @@ includes("lib/commonlibsse-ng")
 
 -- set project
 set_project("simplePoisonStacker")
-set_version("1.2.0")
+set_version("1.3.0")
 set_license("GPL-3.0")
 
 -- set defaults
@@ -20,7 +20,6 @@ set_policy("package.requires_lock", true)
 add_rules("mode.debug", "mode.releasedbg")
 add_rules("plugin.vsxmake.autoupdate")
 
--- require packages
 add_requires("simpleini")
 
 -- targets

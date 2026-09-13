@@ -4,12 +4,15 @@
 .vs/
 .vscode/
 .xmake/
-lib/
 
 # folders
+lib/
 build/
 vs*/
 dist/
+vcpkg_installed/
+include/steam/
+docs/
 
 # files
 *.zip
