@@ -1,4 +1,5 @@
-#include "UI.h"
+#include "Events.h"
+#include "poisonMeterMenu.h"
 
 RE::AlchemyItem* newPoison;
 
@@ -7,12 +8,6 @@ int handSlot = 0;
 
 namespace Hooks
 {
-	static int getMaxCharges(RE::Actor* a_actor)
-	{
-		int maxCharges = a_actor->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAlchemy) * Configuration::Settings::fAlchemyMod;
-		return maxCharges;
-	}
-
 	struct currentPoison
 	{
 		static RE::ExtraPoison* getCurrentPoison(RE::InventoryEntryData* weapon)
@@ -39,7 +34,7 @@ namespace Hooks
 
 			auto currentPoison = getCurrentPoison(poisonTargetWeapon);
 			if (newPoison && currentPoison && currentPoison->poison) {
-				if (currentPoison->poison == newPoison && currentPoison->count < getMaxCharges(player)) {
+				if (currentPoison->poison == newPoison && currentPoison->count < Configuration::Settings::getMaxCharges(player)) {
 					//poisonCharges = currentPoison->count;
 					return nullptr;
 				}
@@ -73,7 +68,7 @@ namespace Hooks
 
 			auto poison = currentPoison::getCurrentPoison(a_poisonTargetWeapon);
 			if (poison) {
-				int maxCharges = getMaxCharges(player);
+				int maxCharges = Configuration::Settings::getMaxCharges(player);
 				if (a_charges + poison->count > maxCharges)
 					poison->count = maxCharges;
 				else
@@ -161,7 +156,7 @@ namespace Hooks
 
 SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* a_skse)
 {
-	SKSE::Init(a_skse, {.trampoline = true,.trampolineSize = 70});
+	SKSE::Init(a_skse, { .trampoline = true,.trampolineSize = 70 });	//70 = 5 different functions, 14 bytes each
 
 	UI::LoadSettings();
 	Hooks::Install();
@@ -171,6 +166,10 @@ SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* a_skse)
 		if (msg->type == SKSE::MessagingInterface::kDataLoaded) {
 			auto dataHandler = RE::TESDataHandler::GetSingleton();
 			leftHandSlot = dataHandler->LookupForm<RE::BGSEquipSlot>(0x13f43, "Skyrim.esm");
+
+			MenuOpenCloseEventHandler::Register();
+			poisonMeterMenu::Register();
+			logs::info("Registering poison meter menu.");
 		}
 
 		if (msg->type == SKSE::MessagingInterface::kPostLoad) {
