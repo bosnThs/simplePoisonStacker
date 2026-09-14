@@ -94,9 +94,9 @@ void poisonMeterMenu::drawMeter(RE::GPtr<RE::IMenu> poisonMeter, bool a_leftHand
 
 	auto def = poisonMeter->uiMovie->GetMovieDef();
 	float xPos, yPos, rot, xScale, yScale;
-	int barColor = Configuration::Settings::iWidgetBarColor * 4294967040;
-	int borderColor =Configuration::Settings::iWidgetBorderColor * 4294967040;
-	int bgColor = Configuration::Settings::iWidgetBGColor * 4294967040;
+	int barColor = Configuration::Settings::iWidgetBarColor;
+	int borderColor =Configuration::Settings::iWidgetBorderColor;
+	int bgColor = Configuration::Settings::iWidgetBGColor;
 	bool barGrowth;
 	if (!a_leftHand)
 	{ 

@@ -158,7 +158,6 @@ SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* a_skse)
 {
 	SKSE::Init(a_skse, { .trampoline = true,.trampolineSize = 70 });	//70 = 5 different functions, 14 bytes each
 
-	UI::LoadSettings();
 	Hooks::Install();
 
 	auto g_message = SKSE::GetMessagingInterface();

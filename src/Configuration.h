@@ -18,9 +18,9 @@ namespace Configuration {
 		inline bool bRightWidgetBarGrowth = false;
 		inline bool bLeftWidgetBarGrowth = false;
 
-		inline float iWidgetBarColor = 10053375;
-		inline float iWidgetBorderColor = 14474460;
-		inline float iWidgetBGColor = 657930;
+		inline int iWidgetBarColor = 10053375;
+		inline int iWidgetBorderColor = 14474460;
+		inline int iWidgetBGColor = 657930;
 
 		inline int getMaxCharges(RE::Actor* a_actor)
 		{
