@@ -7,6 +7,12 @@ int handSlot = 0;
 
 namespace Hooks
 {
+	static int getMaxCharges(RE::Actor* a_actor)
+	{
+		int maxCharges = a_actor->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAlchemy) * Configuration::Settings::fAlchemyMod;
+		return maxCharges;
+	}
+
 	struct currentPoison
 	{
 		static RE::ExtraPoison* getCurrentPoison(RE::InventoryEntryData* weapon)
@@ -33,7 +39,7 @@ namespace Hooks
 
 			auto currentPoison = getCurrentPoison(poisonTargetWeapon);
 			if (newPoison && currentPoison && currentPoison->poison) {
-				if (currentPoison->poison == newPoison && currentPoison->count < Configuration::Settings::iMaxPoisonCharges) {
+				if (currentPoison->poison == newPoison && currentPoison->count < getMaxCharges(player)) {
 					//poisonCharges = currentPoison->count;
 					return nullptr;
 				}
@@ -59,7 +65,6 @@ namespace Hooks
 	{
 		static void thunk(RE::InventoryEntryData* a_poisonTargetWeapon, RE::AlchemyItem* a_newPoison, int a_charges)
 		{
-			//auto owner = poisonTargetWeapon->GetOwner();
 			auto player = RE::PlayerCharacter::GetSingleton();
 			if (player->GetEquippedEntryData(true) && player->GetEquippedEntryData(false) == a_poisonTargetWeapon && handSlot == 1)
 			{
@@ -68,8 +73,9 @@ namespace Hooks
 
 			auto poison = currentPoison::getCurrentPoison(a_poisonTargetWeapon);
 			if (poison) {
-				if (a_charges + poison->count > Configuration::Settings::iMaxPoisonCharges)
-					poison->count = Configuration::Settings::iMaxPoisonCharges;
+				int maxCharges = getMaxCharges(player);
+				if (a_charges + poison->count > maxCharges)
+					poison->count = maxCharges;
 				else
 					poison->count += a_charges;
 				return;
